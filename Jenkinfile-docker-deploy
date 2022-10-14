@@ -12,7 +12,7 @@ stages {
 
       // Get some code from a GitHub repository
 
-      git 'https://github.com/raknas999/GOL-Repo.git'
+      git 'https://github.com/pratikmesh/GOL-Repo.git'
 
       // Get the Maven tool.
      
@@ -41,7 +41,7 @@ stages {
       
       }
  }
- stage('Sonarqube') {
+ /* stage('Sonarqube') {
     environment {
         scannerHome = tool 'sonarqube'
     }
@@ -51,9 +51,9 @@ stages {
         }
      /*   timeout(time: 10, unit: 'MINUTES') {
             waitForQualityGate abortPipeline: true
-        } */
-    }
-}
+       } */
+   }
+} */
 /*     stage('Artifact upload') {
       steps {
      nexusPublisher nexusInstanceId: '1234', nexusRepositoryId: 'releases', packages: [[$class: 'MavenPackage', mavenAssetList: [[classifier: '', extension: '', filePath: 'gameoflife-web/target/gameoflife.war']], mavenCoordinate: [artifactId: 'gameoflife1', groupId: 'com.wakaleo.gameoflife', packaging: 'war', version: '$BUILD_NUMBER']]]
@@ -62,8 +62,8 @@ stages {
     stage('Build and Push Docker Image') {
       steps {
         sh label: '', script: '''sudo docker build -t gameoflife-image:$BUILD_NUMBER .
-                                 sudo docker tag gameoflife-image:$BUILD_NUMBER docker.io/raknas000/gameoflife-image:$BUILD_NUMBER
-                                 sudo docker push docker.io/raknas000/gameoflife-image:$BUILD_NUMBER'''
+                                 sudo docker tag gameoflife-image:$BUILD_NUMBER docker.io/patmesh1/gameoflife-image:$BUILD_NUMBER
+                                 sudo docker push docker.io/patmesh1/gameoflife-image:$BUILD_NUMBER'''
                                  
       }
  }
@@ -75,21 +75,21 @@ stages {
  }
   stage('Apply Kubernetes files') {
             steps {
-             sh label: '', script: '''scp *.yml jenkins@18.117.173.62:/home/jenkins
-                                  ssh jenkins@18.117.173.62 kubectl apply -f deploy-kube.yml
-                                  ssh jenkins@18.117.173.62 kubectl apply -f service.yml'''
+             sh label: '', script: '''scp *.yml jenkins@172.31.36.44:/home/jenkins
+                                  ssh jenkins@172.31.36.44 kubectl apply -f deploy-kube.yml
+                                  ssh jenkins@172.31.36.44 kubectl apply -f service.yml'''
            
         }
      }
     stage('Validation and Rollback') {
             steps {
              sh label: '', script: '''sleep 30
-                                        status_code=$(curl --write-out %{http_code} --silent --output /dev/null http://18.117.173.62:30005/gameoflifes/)
+                                        status_code=$(curl --write-out %{http_code} --silent --output /dev/null http://172.31.36.44:30005/gameoflifes/)
                                         if [[ "$status_code" -ne 200 ]] ; then
                                             echo "Deployment has some problem - $status_code"
-                                            ssh jenkins@18.117.173.62 kubectl rollout undo deployment/sample-deploy
+                                            ssh jenkins@172.31.36.44 kubectl rollout undo deployment/sample-deploy
                                         else
-                                            ssh jenkins@18.117.173.62 kubectl rollout  status deployment/sample-deploy
+                                            ssh jenkins@172.31.36.44 kubectl rollout  status deployment/sample-deploy
                                         fi
                                     '''
            
@@ -109,7 +109,7 @@ post {
             archiveArtifacts 'gameoflife-web/target/*.war'
         }
         failure {
-            mail to:"raknas000@gmail.com", subject:"FAILURE: ${currentBuild.fullDisplayName}", body: "Build failed"
+            mail to:"pratik.meshram63@gmail.com", subject:"FAILURE: ${currentBuild.fullDisplayName}", body: "Build failed"
         }
     }       
 }
